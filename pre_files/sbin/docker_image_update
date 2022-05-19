@@ -1,0 +1,58 @@
+#!/bin/bash
+
+LINE='$1":"$2'
+THREAD="$(grep -i mhz /proc/cpuinfo | wc -l)"
+REGEX="ubuntu|none"
+
+function ECHO() {
+	White="\e[0m"
+    Yellow="\e[33m"
+    Red="\e[31m"
+    Blue="\e[34m"
+    Grey="\e[36m"
+    Green="\e[32m"
+
+	case "$1" in
+	r) Color="${Red}";;
+	g) Color="${Green}";;
+	b) Color="${Blue}";;
+	y) Color="${Yellow}";;
+	x) Color="${Grey}";;
+	esac
+	if [[ -n $2 ]]
+	then
+    	shift
+	fi
+	echo -e "${Grey}[$(date "+%H:%M:%S")]${White}${Color} $1${White}"
+}
+
+function PROC() {
+    busybox ps | grep "$(command -v docker) pull" | grep -v grep | wc -l
+}
+while [[ $1 ]];do
+	case $1 in
+	[0-9])
+		THREAD=$1
+	;;
+	esac
+	shift
+done
+for i in $($(command -v docker) images | awk '{print '${LINE}'}' | egrep -v "REPOSITORY|${REGEX}" | sort | uniq);do
+	{
+		ECHO x "Start to update image ${i} ..."
+		$(command -v docker) pull ${i} 2>&1 > /dev/null
+		if [[ $? == 0 ]]
+		then
+			ECHO y "[$(PROC)] Successfully to update image ${i}"
+		else
+			ECHO r "[$(PROC)] Failed to update image ${i}"
+		fi
+	}&
+	if [[ $(PROC) -gt ${THREAD} ||  $(PROC) == ${THREAD} ]]
+	then
+	    ECHO b "Waiting for ${THREAD} Process ..."
+	    wait
+	fi
+done
+wait
+ECHO y "All done" && exit 0
