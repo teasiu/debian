@@ -23,6 +23,7 @@ mknod /dev/zero    c 1   5
 mknod /dev/random    c 1   8
 mknod /dev/tty    c 5   0
 apt update
+ln -sf /lib/systemd/system/console-getty.service /etc/systemd/system/getty.target.wants/console-getty.service
 sed -i -e 's/#PasswordAuthentication/PasswordAuthentication/g' /etc/ssh/sshd_config
 echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
 echo "Asia/Shanghai" > /etc/timezone
